@@ -173,10 +173,81 @@ export class FusionArchitect {
 
     const cyclomaticComplexity = e - n + 2;
     const coupling = e / Math.max(n, 1);
+    const cohesion = this.calculateCohesion(dependencies);
+    const circularDeps = this.detectCircularDependencies(dependencies);
     
-    const normalizedComplexity = (cyclomaticComplexity * 0.6 + coupling * 0.4) / 10;
+    const baseComplexity = (cyclomaticComplexity * 0.4 + coupling * 0.3) / 10;
+    const cohesionPenalty = (10 - cohesion) * 0.2;
+    const circularPenalty = Math.min(circularDeps.length * 0.5, 3);
     
-    return Math.min(Math.max(normalizedComplexity, 0), 10);
+    const finalComplexity = baseComplexity + cohesionPenalty + circularPenalty;
+    
+    return Math.min(Math.max(finalComplexity, 0), 10);
+  }
+
+  private calculateCohesion(dependencies: DependencyGraph): number {
+    if (dependencies.nodes.length === 0) return 10;
+    
+    const internalEdges = dependencies.edges.filter(e => e.type === 'internal').length;
+    const totalNodes = dependencies.nodes.length;
+    const maxPossibleEdges = (totalNodes * (totalNodes - 1)) / 2;
+    
+    if (maxPossibleEdges === 0) return 10;
+    
+    const cohesionRatio = internalEdges / maxPossibleEdges;
+    return Math.min(cohesionRatio * 10, 10);
+  }
+
+  private detectCircularDependencies(dependencies: DependencyGraph): string[][] {
+    const cycles: string[][] = [];
+    const visited = new Set<string>();
+    const recursionStack = new Set<string>();
+    
+    const adjacencyList = new Map<string, string[]>();
+    for (const node of dependencies.nodes) {
+      adjacencyList.set(node, []);
+    }
+    
+    for (const edge of dependencies.edges) {
+      if (edge.type === 'internal') {
+        const targets = adjacencyList.get(edge.from) || [];
+        targets.push(edge.to);
+        adjacencyList.set(edge.from, targets);
+      }
+    }
+    
+    const dfs = (node: string, path: string[]): boolean => {
+      visited.add(node);
+      recursionStack.add(node);
+      path.push(node);
+      
+      const neighbors = adjacencyList.get(node) || [];
+      for (const neighbor of neighbors) {
+        if (!adjacencyList.has(neighbor)) continue;
+        
+        if (!visited.has(neighbor)) {
+          if (dfs(neighbor, path)) return true;
+        } else if (recursionStack.has(neighbor)) {
+          const cycleStart = path.indexOf(neighbor);
+          if (cycleStart !== -1) {
+            cycles.push(path.slice(cycleStart));
+          }
+          return true;
+        }
+      }
+      
+      recursionStack.delete(node);
+      path.pop();
+      return false;
+    };
+    
+    for (const node of dependencies.nodes) {
+      if (!visited.has(node)) {
+        dfs(node, []);
+      }
+    }
+    
+    return cycles;
   }
 
   private calculateModularity(dependencies: DependencyGraph): number {
@@ -274,6 +345,125 @@ export class FusionArchitect {
 - Infrastructure: Docker + GitHub Actions
 - Testing: Jest / Pytest + Playwright
     `;
+  }
+
+  async generateArchitectureVisualization(analysis: ArchitectureAnalysis): Promise<string> {
+    logger.info('🎨 生成架構可視化圖表（Mermaid）...');
+    
+    let mermaid = '```mermaid\n';
+    mermaid += 'graph TB\n';
+    mermaid += '  classDef presentationClass fill:#4A90E2,stroke:#2E5C8A,color:#fff;\n';
+    mermaid += '  classDef businessClass fill:#50C878,stroke:#2E7D4E,color:#fff;\n';
+    mermaid += '  classDef dataClass fill:#F39C12,stroke:#B8740F,color:#fff;\n';
+    mermaid += '  classDef infraClass fill:#9B59B6,stroke:#6C3483,color:#fff;\n\n';
+    
+    const nodesByLayer = new Map<string, string[]>();
+    for (const layer of analysis.layers) {
+      nodesByLayer.set(layer, []);
+    }
+    
+    const nodeMap = new Map<string, string>();
+    analysis.dependencies.nodes.forEach((node, index) => {
+      const nodeId = `N${index}`;
+      const sanitizedName = node.replace(/[^a-zA-Z0-9]/g, '_');
+      nodeMap.set(node, nodeId);
+      
+      let layerClass = 'infraClass';
+      const nodeLower = node.toLowerCase();
+      if (nodeLower.includes('view') || nodeLower.includes('component') || nodeLower.includes('ui')) {
+        layerClass = 'presentationClass';
+      } else if (nodeLower.includes('service') || nodeLower.includes('handler')) {
+        layerClass = 'businessClass';
+      } else if (nodeLower.includes('model') || nodeLower.includes('repository')) {
+        layerClass = 'dataClass';
+      }
+      
+      mermaid += `  ${nodeId}["${node}"]:::${layerClass}\n`;
+    });
+    
+    mermaid += '\n';
+    
+    const addedEdges = new Set<string>();
+    for (const edge of analysis.dependencies.edges) {
+      if (edge.type === 'internal') {
+        const fromId = nodeMap.get(edge.from);
+        const toId = nodeMap.get(edge.to);
+        
+        if (fromId && toId) {
+          const edgeKey = `${fromId}->${toId}`;
+          if (!addedEdges.has(edgeKey)) {
+            mermaid += `  ${fromId} --> ${toId}\n`;
+            addedEdges.add(edgeKey);
+          }
+        }
+      }
+    }
+    
+    mermaid += '```\n\n';
+    
+    mermaid += '### 圖表說明\n';
+    mermaid += '- 🔵 **藍色**：表現層（Presentation Layer）\n';
+    mermaid += '- 🟢 **綠色**：業務層（Business Layer）\n';
+    mermaid += '- 🟡 **橙色**：數據層（Data Layer）\n';
+    mermaid += '- 🟣 **紫色**：基礎設施層（Infrastructure Layer）\n';
+    
+    return mermaid;
+  }
+
+  async detectAntiPatterns(dependencies: DependencyGraph): Promise<string[]> {
+    const antiPatterns: string[] = [];
+    
+    const circularDeps = this.detectCircularDependencies(dependencies);
+    if (circularDeps.length > 0) {
+      antiPatterns.push(
+        `🔴 循環依賴 (Circular Dependencies): 檢測到 ${circularDeps.length} 個循環依賴鏈。` +
+        `這會導致模組耦合度過高，難以維護和測試。建議使用依賴注入或事件驅動模式解決。`
+      );
+    }
+    
+    const degreeMap = new Map<string, { in: number; out: number }>();
+    for (const node of dependencies.nodes) {
+      degreeMap.set(node, { in: 0, out: 0 });
+    }
+    
+    for (const edge of dependencies.edges) {
+      if (edge.type === 'internal') {
+        const from = degreeMap.get(edge.from);
+        const to = degreeMap.get(edge.to);
+        if (from) from.out++;
+        if (to) to.in++;
+      }
+    }
+    
+    for (const [node, degree] of degreeMap.entries()) {
+      if (degree.out > 10) {
+        antiPatterns.push(
+          `🟡 上帝對象 (God Object): "${node}" 依賴了 ${degree.out} 個模組。` +
+          `建議拆分為多個職責單一的小模組。`
+        );
+      }
+      
+      if (degree.in > 15) {
+        antiPatterns.push(
+          `🟠 中心化依賴 (Hub Dependency): "${node}" 被 ${degree.in} 個模組依賴。` +
+          `這個模組的變更會影響大量其他模組，建議重構以減少耦合。`
+        );
+      }
+    }
+    
+    const isolatedNodes = dependencies.nodes.filter(node => {
+      const degree = degreeMap.get(node);
+      return degree && degree.in === 0 && degree.out === 0;
+    });
+    
+    if (isolatedNodes.length > 0) {
+      antiPatterns.push(
+        `⚪ 孤立模組 (Isolated Modules): 發現 ${isolatedNodes.length} 個孤立模組沒有與其他模組連接。` +
+        `可能是未使用的代碼，建議清理。`
+      );
+    }
+    
+    return antiPatterns;
   }
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "fusion-agent-ultimate",
-  "version": "1.0.0",
-  "description": "世界頂級融合智能體 - 整合多模態 AI、自適應學習、全棧開發、安全掃描、性能優化於一體的革命性插件",
+  "version": "2.0.0",
+  "description": "🚀 世界頂級企業級融合智能體 - 整合深度性能分析、安全掃描、架構設計、代碼生成於一體的革命性 AI 開發平台",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "keywords": [

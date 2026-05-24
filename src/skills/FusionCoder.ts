@@ -305,6 +305,281 @@ ${code}
       return '解釋失敗';
     }
   }
+
+  detectDesignPatterns(code: string): Array<{ pattern: string; location: string; confidence: number }> {
+    const patterns: Array<{ pattern: string; location: string; confidence: number }> = [];
+
+    if (code.match(/class\s+\w+Factory/i)) {
+      patterns.push({
+        pattern: 'Factory Pattern (工廠模式)',
+        location: '類定義',
+        confidence: 95,
+      });
+    }
+
+    const singletonPattern = code.match(/private\s+static\s+\w+\s+instance|getInstance\s*\(\)/gi);
+    if (singletonPattern && singletonPattern.length >= 2) {
+      patterns.push({
+        pattern: 'Singleton Pattern (單例模式)',
+        location: 'getInstance 方法',
+        confidence: 98,
+      });
+    }
+
+    if (code.match(/class\s+\w+Adapter|implements\s+\w+Interface/gi)) {
+      patterns.push({
+        pattern: 'Adapter Pattern (適配器模式)',
+        location: '類實現',
+        confidence: 85,
+      });
+    }
+
+    const observerPattern = code.match(/addEventListener|on\(|emit\(|subscribe|Observer/gi);
+    if (observerPattern && observerPattern.length >= 2) {
+      patterns.push({
+        pattern: 'Observer Pattern (觀察者模式)',
+        location: '事件系統',
+        confidence: 90,
+      });
+    }
+
+    if (code.match(/class\s+\w+Strategy|setStrategy|strategy\./gi)) {
+      patterns.push({
+        pattern: 'Strategy Pattern (策略模式)',
+        location: '策略切換邏輯',
+        confidence: 92,
+      });
+    }
+
+    if (code.match(/class\s+\w+Decorator|@\w+\(|wraps\(/gi)) {
+      patterns.push({
+        pattern: 'Decorator Pattern (裝飾器模式)',
+        location: '裝飾器定義',
+        confidence: 88,
+      });
+    }
+
+    if (code.match(/class\s+\w+Facade|facade\./gi)) {
+      patterns.push({
+        pattern: 'Facade Pattern (外觀模式)',
+        location: 'Facade 類',
+        confidence: 80,
+      });
+    }
+
+    const builderPattern = code.match(/\.with\w+\(|\.set\w+\(.*return\s+this|builder/gi);
+    if (builderPattern && builderPattern.length >= 3) {
+      patterns.push({
+        pattern: 'Builder Pattern (建造者模式)',
+        location: '鏈式調用',
+        confidence: 87,
+      });
+    }
+
+    if (code.match(/class\s+\w+Proxy|new\s+Proxy\(/gi)) {
+      patterns.push({
+        pattern: 'Proxy Pattern (代理模式)',
+        location: 'Proxy 實現',
+        confidence: 93,
+      });
+    }
+
+    if (code.match(/command\s*=|execute\(|undo\(|redo\(/gi)) {
+      patterns.push({
+        pattern: 'Command Pattern (命令模式)',
+        location: '命令執行邏輯',
+        confidence: 85,
+      });
+    }
+
+    return patterns;
+  }
+
+  async applyDesignPattern(code: string, patternName: string): Promise<string> {
+    logger.info(`🎨 應用設計模式：${patternName}...`);
+
+    const patterns: Record<string, string> = {
+      singleton: `
+// Singleton Pattern Implementation
+class Singleton {
+  private static instance: Singleton;
+  private constructor() {}
+  
+  public static getInstance(): Singleton {
+    if (!Singleton.instance) {
+      Singleton.instance = new Singleton();
+    }
+    return Singleton.instance;
+  }
+}`,
+      factory: `
+// Factory Pattern Implementation  
+interface Product {
+  operation(): string;
+}
+
+class ConcreteProductA implements Product {
+  operation(): string { return 'Product A'; }
+}
+
+class ConcreteProductB implements Product {
+  operation(): string { return 'Product B'; }
+}
+
+class Factory {
+  static createProduct(type: string): Product {
+    switch(type) {
+      case 'A': return new ConcreteProductA();
+      case 'B': return new ConcreteProductB();
+      default: throw new Error('Unknown product type');
+    }
+  }
+}`,
+      strategy: `
+// Strategy Pattern Implementation
+interface Strategy {
+  execute(data: any): any;
+}
+
+class ConcreteStrategyA implements Strategy {
+  execute(data: any): any { return data * 2; }
+}
+
+class ConcreteStrategyB implements Strategy {
+  execute(data: any): any { return data * 3; }
+}
+
+class Context {
+  private strategy: Strategy;
+  
+  setStrategy(strategy: Strategy): void {
+    this.strategy = strategy;
+  }
+  
+  executeStrategy(data: any): any {
+    return this.strategy.execute(data);
+  }
+}`,
+      observer: `
+// Observer Pattern Implementation
+interface Observer {
+  update(data: any): void;
+}
+
+class Subject {
+  private observers: Observer[] = [];
+  
+  attach(observer: Observer): void {
+    this.observers.push(observer);
+  }
+  
+  detach(observer: Observer): void {
+    const index = this.observers.indexOf(observer);
+    if (index > -1) this.observers.splice(index, 1);
+  }
+  
+  notify(data: any): void {
+    for (const observer of this.observers) {
+      observer.update(data);
+    }
+  }
+}`,
+      builder: `
+// Builder Pattern Implementation
+class Product {
+  parts: string[] = [];
+}
+
+interface Builder {
+  reset(): void;
+  buildPartA(): Builder;
+  buildPartB(): Builder;
+  buildPartC(): Builder;
+  getResult(): Product;
+}
+
+class ConcreteBuilder implements Builder {
+  private product: Product;
+  
+  constructor() { this.reset(); }
+  
+  reset(): void { this.product = new Product(); }
+  
+  buildPartA(): Builder {
+    this.product.parts.push('PartA');
+    return this;
+  }
+  
+  buildPartB(): Builder {
+    this.product.parts.push('PartB');
+    return this;
+  }
+  
+  buildPartC(): Builder {
+    this.product.parts.push('PartC');
+    return this;
+  }
+  
+  getResult(): Product {
+    const result = this.product;
+    this.reset();
+    return result;
+  }
+}`,
+    };
+
+    return patterns[patternName.toLowerCase()] || `設計模式 "${patternName}" 尚未實現`;
+  }
+
+  calculateComplexityMetrics(code: string): {
+    cyclomaticComplexity: number;
+    cognitiveComplexity: number;
+    linesOfCode: number;
+    maintainabilityIndex: number;
+  } {
+    const lines = code.split('\n').filter(line => line.trim().length > 0);
+    const linesOfCode = lines.length;
+
+    const branches = (code.match(/if\s*\(|else|case\s+|catch\s*\(|&&|\|\|/g) || []).length;
+    const loops = (code.match(/for\s*\(|while\s*\(|do\s+\{/g) || []).length;
+    const functions = (code.match(/function\s+\w+|=>\s*\{|^\s*\w+\s*\(/gm) || []).length;
+    
+    const cyclomaticComplexity = branches + loops + functions + 1;
+
+    const nestedDepth = this.calculateMaxNestingDepth(code);
+    const cognitiveComplexity = branches * 1.5 + loops * 2 + nestedDepth * 3;
+
+    const averageLineLength = code.split('\n').reduce((sum, line) => sum + line.length, 0) / lines.length;
+    const commentRatio = (code.match(/\/\/|\/\*|\*\//g) || []).length / lines.length;
+    
+    const maintainabilityIndex = Math.max(
+      0,
+      100 - cyclomaticComplexity * 2 - linesOfCode / 10 - nestedDepth * 5 + commentRatio * 10
+    );
+
+    return {
+      cyclomaticComplexity,
+      cognitiveComplexity: Math.round(cognitiveComplexity),
+      linesOfCode,
+      maintainabilityIndex: Math.round(maintainabilityIndex),
+    };
+  }
+
+  private calculateMaxNestingDepth(code: string): number {
+    let maxDepth = 0;
+    let currentDepth = 0;
+    
+    for (let i = 0; i < code.length; i++) {
+      if (code[i] === '{') {
+        currentDepth++;
+        maxDepth = Math.max(maxDepth, currentDepth);
+      } else if (code[i] === '}') {
+        currentDepth = Math.max(0, currentDepth - 1);
+      }
+    }
+    
+    return maxDepth;
+  }
 }
 
 export default FusionCoder;
