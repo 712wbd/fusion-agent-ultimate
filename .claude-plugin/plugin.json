@@ -1,0 +1,184 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "fusion-agent-ultimate",
+  "displayName": "🌟 Fusion Agent Ultimate",
+  "version": "1.0.0",
+  "description": "世界頂級融合智能體 - 整合多模態 AI、自適應學習、全棧開發、安全掃描、性能優化於一體的革命性插件。具備自我進化能力，打造真正的 AI 協作夥伴。",
+  "author": {
+    "name": "712wbd",
+    "email": "712wbd@github.com"
+  },
+  "category": "development",
+  "tags": [
+    "ai-fusion",
+    "multi-modal",
+    "adaptive-learning",
+    "full-stack",
+    "security",
+    "performance",
+    "code-generation",
+    "architecture",
+    "testing",
+    "deployment"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/712wbd/fusion-agent-ultimate"
+  },
+  "homepage": "https://github.com/712wbd/fusion-agent-ultimate",
+  "license": "MIT",
+  "keywords": [
+    "fusion-ai",
+    "intelligent-agent",
+    "adaptive-learning",
+    "code-optimization",
+    "multi-modal-ai",
+    "security-scanner",
+    "performance-tuner",
+    "architecture-advisor"
+  ],
+  "activation": {
+    "onStartup": true,
+    "commands": [
+      "fusion.activate",
+      "fusion.analyze",
+      "fusion.optimize",
+      "fusion.secure",
+      "fusion.deploy"
+    ]
+  },
+  "contributes": {
+    "skills": [
+      {
+        "id": "fusion-architect",
+        "name": "🏗️ Fusion Architect",
+        "description": "智能架構設計師 - 分析需求，設計最優架構，提供技術選型建議"
+      },
+      {
+        "id": "fusion-coder",
+        "name": "💻 Fusion Coder",
+        "description": "超級代碼生成器 - 多語言支持，智能補全，自動重構"
+      },
+      {
+        "id": "fusion-optimizer",
+        "name": "⚡ Fusion Optimizer",
+        "description": "性能優化大師 - 分析瓶頸，優化算法，提升性能 10-100 倍"
+      },
+      {
+        "id": "fusion-security",
+        "name": "🔒 Fusion Security",
+        "description": "安全防護專家 - 漏洞掃描，依賴檢查，自動修復"
+      },
+      {
+        "id": "fusion-tester",
+        "name": "🧪 Fusion Tester",
+        "description": "智能測試生成器 - 單元測試，集成測試，E2E 測試自動化"
+      },
+      {
+        "id": "fusion-devops",
+        "name": "🚀 Fusion DevOps",
+        "description": "CI/CD 自動化專家 - 部署流程，容器化，雲端整合"
+      },
+      {
+        "id": "fusion-learner",
+        "name": "🧠 Fusion Learner",
+        "description": "自適應學習引擎 - 從項目中學習，不斷進化，個性化建議"
+      },
+      {
+        "id": "fusion-assistant",
+        "name": "🤖 Fusion Assistant",
+        "description": "全能開發助手 - 問答系統，文檔生成，代碼審查"
+      }
+    ],
+    "agents": [
+      {
+        "id": "fusion-master",
+        "name": "Fusion Master Agent",
+        "description": "主控智能體 - 協調所有子模組，提供統一的智能開發體驗"
+      }
+    ],
+    "commands": [
+      {
+        "command": "fusion.activate",
+        "title": "🌟 啟動 Fusion Agent"
+      },
+      {
+        "command": "fusion.analyze",
+        "title": "🔍 智能分析項目"
+      },
+      {
+        "command": "fusion.optimize",
+        "title": "⚡ 全面優化"
+      },
+      {
+        "command": "fusion.secure",
+        "title": "🔒 安全掃描"
+      },
+      {
+        "command": "fusion.deploy",
+        "title": "🚀 一鍵部署"
+      },
+      {
+        "command": "fusion.learn",
+        "title": "🧠 學習模式"
+      },
+      {
+        "command": "fusion.review",
+        "title": "👀 代碼審查"
+      },
+      {
+        "command": "fusion.test",
+        "title": "🧪 生成測試"
+      },
+      {
+        "command": "fusion.refactor",
+        "title": "♻️ 智能重構"
+      },
+      {
+        "command": "fusion.document",
+        "title": "📚 生成文檔"
+      }
+    ]
+  },
+  "capabilities": {
+    "multiModal": true,
+    "adaptiveLearning": true,
+    "securityScan": true,
+    "performanceOptimization": true,
+    "codeGeneration": true,
+    "architectureDesign": true,
+    "testingAutomation": true,
+    "cicdIntegration": true,
+    "cloudDeployment": true,
+    "realTimeCollaboration": true
+  },
+  "requirements": {
+    "node": ">=18.0.0",
+    "claude": ">=3.5.0"
+  },
+  "config": {
+    "learningMode": "adaptive",
+    "securityLevel": "high",
+    "optimizationLevel": "aggressive",
+    "languages": [
+      "typescript",
+      "javascript",
+      "python",
+      "rust",
+      "go",
+      "java",
+      "cpp",
+      "csharp"
+    ],
+    "frameworks": [
+      "react",
+      "vue",
+      "angular",
+      "nextjs",
+      "express",
+      "fastapi",
+      "django",
+      "spring"
+    ]
+  }
+}
